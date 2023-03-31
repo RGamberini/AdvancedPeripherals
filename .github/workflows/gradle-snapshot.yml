@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     name: Build
+    runs-on: windows_latest
     steps:
       - uses: actions/checkout@v2
         with:
