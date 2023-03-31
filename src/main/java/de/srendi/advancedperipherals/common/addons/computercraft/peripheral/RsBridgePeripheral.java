@@ -349,6 +349,7 @@ public class RsBridgePeripheral extends BasePeripheral<BlockEntityPeripheralOwne
     @LuaFunction(mainThread = true)
     public final MethodResult isItemCrafting(String item) {
         return MethodResult.of(true);
+        return MethodResult.of(true);
         if (!isConnected())
             return notConnected();
 
