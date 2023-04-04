@@ -90,6 +90,13 @@ public class RsBridgePeripheral extends BasePeripheral<BlockEntityPeripheralOwne
     }
 
     @LuaFunction(mainThread = true)
+    public final Object listCraftingMonitorElements() {
+        if (!isConnected())
+            return notConnected();
+        return RefinedStorage.listCraftingMonitorElements(getNetwork());
+    }
+
+    @LuaFunction(mainThread = true)
     public final MethodResult getMaxItemDiskStorage() {
         if (!isConnected())
             return notConnected();
@@ -173,13 +180,16 @@ public class RsBridgePeripheral extends BasePeripheral<BlockEntityPeripheralOwne
 
     protected MethodResult exportToChest(@NotNull IArguments arguments, @NotNull IItemHandler targetInventory) throws LuaException {
         RsItemHandler itemHandler = new RsItemHandler(getNetwork());
+        AdvancedPeripherals.LOGGER.error("exportToChest");
         if (targetInventory == null)
             return MethodResult.of(0, "INVALID_TARGET");
-
+        AdvancedPeripherals.LOGGER.error("missed return 1");
         Pair<ItemFilter, String> filter = ItemFilter.parse(arguments.getTable(0));
         if (filter.rightPresent())
             return MethodResult.of(0, filter.getRight());
+        AdvancedPeripherals.LOGGER.error("missed return 2");
 
+        AdvancedPeripherals.LOGGER.error("A");
         return MethodResult.of(InventoryUtil.moveItem(itemHandler, targetInventory, filter.getLeft()), null);
     }
 
@@ -348,7 +358,6 @@ public class RsBridgePeripheral extends BasePeripheral<BlockEntityPeripheralOwne
 
     @LuaFunction(mainThread = true)
     public final MethodResult isItemCrafting(String item) {
-        return MethodResult.of(true);
         if (!isConnected())
             return notConnected();
 

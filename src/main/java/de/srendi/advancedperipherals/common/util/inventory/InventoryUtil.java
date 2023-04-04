@@ -3,6 +3,7 @@ package de.srendi.advancedperipherals.common.util.inventory;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
+import de.srendi.advancedperipherals.AdvancedPeripherals;
 import de.srendi.advancedperipherals.common.addons.computercraft.owner.IPeripheralOwner;
 import de.srendi.advancedperipherals.common.util.CoordUtil;
 import net.minecraft.core.Direction;
@@ -42,6 +43,7 @@ public class InventoryUtil {
     }
 
     public static int moveItem(IItemHandler inventoryFrom, IItemHandler inventoryTo, ItemFilter filter) {
+        AdvancedPeripherals.LOGGER.error("C");
         if (inventoryFrom == null) return 0;
 
         int fromSlot = filter.getFromSlot();
@@ -52,7 +54,10 @@ public class InventoryUtil {
 
         // The logic changes with storage systems since these systems do not have slots
         if (inventoryFrom instanceof IStorageSystemItemHandler storageSystemHandler) {
+            AdvancedPeripherals.LOGGER.error("D1");
             for (int i = toSlot == -1 ? 0 : toSlot; i < (toSlot == -1 ? inventoryTo.getSlots() : toSlot + 1); i++) {
+                AdvancedPeripherals.LOGGER.error("TOP OF FOR LOOP");
+                AdvancedPeripherals.LOGGER.error(filter.getNbt());
                 ItemStack extracted = storageSystemHandler.extractItem(filter, true);
                 ItemStack inserted;
                 if (toSlot == -1) {
@@ -60,8 +65,10 @@ public class InventoryUtil {
                 } else {
                     inserted = inventoryTo.insertItem(toSlot, extracted, false);
                 }
+                AdvancedPeripherals.LOGGER.error(String.format("amount: %d\ntransferableAmount: %d\nextracted.getCount(): %d\ninserted.getCount(): %d\n", amount, transferableAmount, extracted.getCount(), inserted.getCount()));
                 amount -= inserted.getCount();
                 transferableAmount += storageSystemHandler.extractItem(filter, false).getCount();
+                AdvancedPeripherals.LOGGER.error(String.format("amount: %d\ntransferableAmount: %d\nextracted.getCount(): %d\ninserted.getCount(): %d\n", amount, transferableAmount, extracted.getCount(), inserted.getCount()));
                 if (transferableAmount >= filter.getCount())
                     break;
             }
@@ -69,6 +76,7 @@ public class InventoryUtil {
         }
 
         if (inventoryTo instanceof IStorageSystemItemHandler storageSystemHandler) {
+            AdvancedPeripherals.LOGGER.error("D2");
             for (int i = fromSlot == -1 ? 0 : fromSlot; i < (fromSlot == -1 ? inventoryFrom.getSlots() : fromSlot + 1); i++) {
                 if (filter.test(inventoryFrom.getStackInSlot(i))) {
                     ItemStack extracted = inventoryFrom.extractItem(i, amount - transferableAmount, true);
@@ -82,7 +90,7 @@ public class InventoryUtil {
             }
             return transferableAmount;
         }
-
+        AdvancedPeripherals.LOGGER.error("D3");
         for (int i = fromSlot == -1 ? 0 : fromSlot; i < (fromSlot == -1 ? inventoryFrom.getSlots() : fromSlot + 1); i++) {
             if (filter.test(inventoryFrom.getStackInSlot(i))) {
                 ItemStack extracted = inventoryFrom.extractItem(i, amount - transferableAmount, true);
@@ -98,6 +106,7 @@ public class InventoryUtil {
                     break;
             }
         }
+        AdvancedPeripherals.LOGGER.error("E");
         return transferableAmount;
     }
 

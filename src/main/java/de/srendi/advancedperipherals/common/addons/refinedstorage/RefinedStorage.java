@@ -3,6 +3,8 @@ package de.srendi.advancedperipherals.common.addons.refinedstorage;
 import com.refinedmods.refinedstorage.api.IRSAPI;
 import com.refinedmods.refinedstorage.api.autocrafting.ICraftingManager;
 import com.refinedmods.refinedstorage.api.autocrafting.ICraftingPattern;
+import com.refinedmods.refinedstorage.api.autocrafting.craftingmonitor.ICraftingMonitorElement;
+import com.refinedmods.refinedstorage.api.autocrafting.task.ICraftingTask;
 import com.refinedmods.refinedstorage.api.network.INetwork;
 import com.refinedmods.refinedstorage.api.network.node.INetworkNode;
 import com.refinedmods.refinedstorage.api.storage.IStorage;
@@ -11,15 +13,19 @@ import com.refinedmods.refinedstorage.api.storage.disk.IStorageDisk;
 import com.refinedmods.refinedstorage.api.storage.externalstorage.IExternalStorage;
 import com.refinedmods.refinedstorage.api.util.StackListEntry;
 import com.refinedmods.refinedstorage.apiimpl.API;
+import com.refinedmods.refinedstorage.apiimpl.autocrafting.craftingmonitor.ItemCraftingMonitorElement;
 import com.refinedmods.refinedstorage.apiimpl.network.node.NetworkNode;
+import com.refinedmods.refinedstorage.util.StackUtils;
 import dan200.computercraft.shared.util.NBTUtil;
 import de.srendi.advancedperipherals.AdvancedPeripherals;
 import de.srendi.advancedperipherals.common.util.LuaConverter;
 import de.srendi.advancedperipherals.common.util.inventory.FluidFilter;
 import de.srendi.advancedperipherals.common.util.inventory.ItemFilter;
 import de.srendi.advancedperipherals.common.util.inventory.ItemUtil;
+import io.netty.buffer.Unpooled;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -109,6 +115,35 @@ public class RefinedStorage {
         List<Object> items = new ArrayList<>();
         getItems(network).forEach(item -> items.add(getObjectFromStack(item, network)));
         return items;
+    }
+    public static Map<String, Object> getObjectFromCraftingMonitorElement(ICraftingMonitorElement craftingMonitorElement, INetwork network) {
+        Map<String, Object> map = new HashMap<>();
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        craftingMonitorElement.write(buf);
+        if (craftingMonitorElement instanceof ItemCraftingMonitorElement)
+            map.put("stack", getObjectFromStack(StackUtils.readItemStack(buf), network));
+        else
+            map.put("stack", getObjectFromFluid(FluidStack.readFromPacket(buf), network));
+        map.put("stored",  buf.readInt());
+        map.put("missing",  buf.readInt());
+        map.put("processing",  buf.readInt());
+        map.put("scheduled",  buf.readInt());
+        map.put("crafting",  buf.readInt());
+        return map;
+    }
+    public static Object listCraftingMonitorElements(INetwork network) {
+        List<Object> tasks = new ArrayList<>();
+        try {
+            network.getCraftingManager().getTasks().forEach(task -> {
+                List<Object> craftingMonitorElements = new ArrayList<>();
+                task.getCraftingMonitorElements().forEach(element ->
+                        craftingMonitorElements.add(getObjectFromCraftingMonitorElement(element, network)));
+                tasks.add(craftingMonitorElements);
+            });
+        } catch (NullPointerException e) {
+            System.out.println("SHIT BROKE REEEE");
+        }
+        return tasks;
     }
 
     public static boolean isItemCraftable(INetwork network, ItemStack stack) {
